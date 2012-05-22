@@ -86,15 +86,43 @@
       return false;
     },
 
+    checkFork: function(player, forkCorner, edge1, edge2, corner1, corner2) {
+      var c = this.cells;
+      return (c[forkCorner] === undefined && (
+        c[edge1] === player && c[edge2] === player && c[corner1] === undefined && c[corner2] === undefined ||
+        c[edge1] === player && c[corner2] === player && c[corner1] === undefined && c[edge2] === undefined ||
+        c[edge2] === player && c[corner1] === player && c[corner2] === undefined && c[edge1] === undefined
+      )) ? forkCorner : false;
+    },
+
     // Returns the index of a corner that can be taken to set up a winning move
     // on the next turn, or false if none exist.
-    checkCornerCombo: function(player) {
+    checkForks: function(player) {
       return (
-        this.checkCombo(player, 1, 2, 4) ||
-        this.checkCombo(player, 3, 2, 6) ||
-        this.checkCombo(player, 7, 4, 8) ||
-        this.checkCombo(player, 9, 6, 8)
+        this.checkFork(player, 1, 2, 4, 3, 7) ||
+        this.checkFork(player, 3, 2, 6, 1, 9) ||
+        this.checkFork(player, 7, 4, 8, 1, 9) ||
+        this.checkFork(player, 9, 6, 8, 3, 7)
       );
+    },
+
+    // If the opponent has two potential forks on the board, returns the index
+    // of a defensive move which forces a block, preventing the forks.
+    checkDoubleForks: function(player, opponent) {
+      // Should only happen in two specific board states.
+      return (
+        this.checkState({1: opponent, 5: player, 9: opponent}, 2) ||
+        this.checkState({3: opponent, 5: player, 7: opponent}, 2)
+      );
+    },
+
+    // Returns response if all cells on the board equal the corresponding value in state,
+    // otherwise returns false
+    checkState: function(state, response) {
+      for (var i = 1; i < 10; i++) {
+        if (this.cells[i] !== state[i]) return false;
+      }
+      return response;
     },
 
     // Returns the index of the first empty cell from indexes,
@@ -115,10 +143,11 @@
       return (
         this.checkLines(player) || // win
         this.checkLines(opponent) || // block win
+        this.checkDoubleForks(player, opponent) || // block fork
         // this won't get used when playing all moves via generateMove, due to
         // the simple defensive strategy below
-        this.checkCornerCombo(player) || // set up for win
-        this.checkCornerCombo(opponent) || // block set up for win
+        this.checkForks(player) || // fork
+        this.checkForks(opponent) || // block fork
         // Play middle, then corners, then edges as a simple defensive strategy
         this.checkCells([5, 1, 3, 7, 9, 2, 4, 6, 8])
       );
