@@ -8,6 +8,7 @@ h1 {
   background: #bdb;
   margin: 0 0 10px;
   padding: 2px;
+  box-shadow: 0 2px 10px #ccc;
 }
 
 #board {
